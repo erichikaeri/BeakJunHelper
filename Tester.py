@@ -104,9 +104,9 @@ class Tester:
             raise FileNotFoundError("Program does not exist at {}. Did you forget to compile it?".format(programPath))
 
         for eachTestCase in testCases:
-            programInput = eachTestCase[0]
-            programOutput = self.RunProgram(programPath, programInput)
-            expectedOutput = eachTestCase[1]
+            programInput = self._processString(eachTestCase[0])
+            programOutput = self._processString(self.RunProgram(programPath, programInput))
+            expectedOutput = self._processString(eachTestCase[1])
 
             if programOutput != expectedOutput:
                 return (programInput, programOutput, expectedOutput)
@@ -122,6 +122,10 @@ class Tester:
         out, errs = proc.communicate(input=testInput.encode("utf-8"))
 
         return out.decode("utf-8").strip()
+
+    @staticmethod
+    def _processString(string: str):
+        return string.strip().replace("\r\n", "\n")
 
 
 def Init(problemNumber: str):

@@ -152,6 +152,7 @@ class TestTester(unittest.TestCase):
     def setUp(self) -> None:
         self.tester = Tester.Tester()
         self.programPath = os.path.join("Test", "MultiplyByTwo.exe")
+        self.newlineProgramPath = os.path.join("Test", "PrintNewLines.exe")
 
     def test_TesterOK(self):
         testCases = [("1", "2"), ("2", "4"), ("3", "6")]
@@ -165,6 +166,12 @@ class TestTester(unittest.TestCase):
         self.assertEqual(testResult[0], "3")
         self.assertEqual(testResult[1], "6")
         self.assertEqual(testResult[2], "7")
+
+    def test_TesterTrailingSpaces(self):
+        # 윈도우 스타일과 리눅스 스타일을 섞어서 테스트 해본다.
+        testCases = [("1", "1\r\n"), ("2", "1\r\n2\r\n"), ("3", "1\n2\n3\n")]
+        testResult = self.tester.Test(self.newlineProgramPath, testCases)
+        self.assertTrue(testResult is None)
 
 if __name__ == "__main__":
     unittest.main()
