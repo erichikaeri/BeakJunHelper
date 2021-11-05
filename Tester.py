@@ -10,6 +10,10 @@ import json
 TestCase = Tuple[str, str]
 
 
+def StripNewline(string: str):
+    return string.strip().replace("\r\n", "\n")
+
+
 class BJFetcher:
     def __init__(self) -> None:
         self.testCases: list[TestCase] = []
@@ -98,11 +102,27 @@ class ExeFolderManager:
 
 class PythonFolderManager(ExeFolderManager):
     '''따로 구현하는 게 맞지만 귀찮으므로 상속'''
-    def CreateProblemStorage(self, problemNumber: str) -> TestCaseStorage:
-        pass
+
+    def CreateTestCaseStorage(self, problemNumber: str) -> TestCaseStorage:
+        if os.path.isdir(problemNumber):
+            raise FileExistsError()
+
+        os.mkdir(problemNumber)
+        
+        templateDestFileName = self._GetSourceFileName(problemNumber)
+        templateDestPath = os.path.join(problemNumber, templateDestFileName)
+
+        with open(templateDestPath, "w"):
+            pass
+
+        return TestCaseStorage(os.path.abspath(problemNumber))
 
     def GetProgramAbsolutePath(self, problemNumber: str) -> str:
-        pass
+        return self._GetSourceFileName(problemNumber)
+
+    @staticmethod
+    def _GetSourceFileName(problemNumber):
+        return "{}.py".format(problemNumber)
 
 
 class ExeTester:
@@ -113,9 +133,9 @@ class ExeTester:
             raise FileNotFoundError("Program does not exist at {}. Did you forget to compile it?".format(programPath))
 
         for eachTestCase in testCases:
-            programInput = self._processString(eachTestCase[0])
-            programOutput = self._processString(self.RunProgram(programPath, programInput))
-            expectedOutput = self._processString(eachTestCase[1])
+            programInput = StripNewline(eachTestCase[0])
+            programOutput = StripNewline(self.RunProgram(programPath, programInput))
+            expectedOutput = StripNewline(eachTestCase[1])
 
             if programOutput != expectedOutput:
                 return (programInput, programOutput, expectedOutput)
@@ -132,14 +152,31 @@ class ExeTester:
 
         return out.decode("utf-8").strip()
 
-    @staticmethod
-    def _processString(string: str):
-        return string.strip().replace("\r\n", "\n")
-
 
 class PythonTester:
     def Test(self, sourceFilePath: str, testCases: list[TestCase]) -> Tuple[str, str, str]:
-        pass
+        if not os.path.isfile(sourceFilePath):
+            raise FileNotFoundError("Source file does not exist at {}. Did you forget to init?")
+
+        for eachTestCase in testCases:
+            programInput = StripNewline(eachTestCase[0])
+            programOutput = StripNewline(self.RunProgram(sourceFilePath, programInput))
+            expectedOutput = StripNewline(eachTestCase[1])
+
+            if programOutput != expectedOutput:
+                return (programInput, programOutput, expectedOutput)
+
+        return None
+
+    @staticmethod
+    def RunProgram(sourceFilePath, testInput):
+        command = 'python "{}"'.format(sourceFilePath)
+
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, 
+            stdin=subprocess.PIPE)
+        out, errs = proc.communicate(input=testInput.encode("utf-8"))
+
+        return out.decode("utf-8").strip()
 
 
 def Init(problemNumber: str):

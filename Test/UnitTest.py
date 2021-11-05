@@ -173,5 +173,12 @@ class TestExeTester(unittest.TestCase):
         testResult = self.tester.Test(self.newlineProgramPath, testCases)
         self.assertTrue(testResult is None)
 
+    
+class TestPyhonTester(TestExeTester):
+    def setUp(self) -> None:
+        self.tester = Tester.PythonTester()
+        self.programPath = os.path.join("Test", "MultiplyByTwo.py")
+        self.newlineProgramPath = os.path.join("Test", "PrintNewLines.py")
+
 if __name__ == "__main__":
     unittest.main()
