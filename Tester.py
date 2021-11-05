@@ -1,10 +1,12 @@
 import os
+from posixpath import relpath
 import shutil
 import subprocess
 from typing import Tuple
 import requests
 from bs4 import BeautifulSoup
 import json
+from abc import ABC, abstractmethod
 
 
 TestCase = Tuple[str, str]
@@ -118,7 +120,8 @@ class PythonFolderManager(ExeFolderManager):
         return TestCaseStorage(os.path.abspath(problemNumber))
 
     def GetProgramAbsolutePath(self, problemNumber: str) -> str:
-        return self._GetSourceFileName(problemNumber)
+        relPath = os.path.join(problemNumber, self._GetSourceFileName(problemNumber))
+        return os.path.abspath(relPath)
 
     @staticmethod
     def _GetSourceFileName(problemNumber):
@@ -156,7 +159,7 @@ class ExeTester:
 class PythonTester:
     def Test(self, sourceFilePath: str, testCases: list[TestCase]) -> Tuple[str, str, str]:
         if not os.path.isfile(sourceFilePath):
-            raise FileNotFoundError("Source file does not exist at {}. Did you forget to init?")
+            raise FileNotFoundError("Source file does not exist at {}. Did you forget to init?".format(sourceFilePath))
 
         for eachTestCase in testCases:
             programInput = StripNewline(eachTestCase[0])
@@ -179,9 +182,35 @@ class PythonTester:
         return out.decode("utf-8").strip()
 
 
-def Init(problemNumber: str):
+class Factory(ABC):
+    @abstractmethod
+    def CreateFolderManager(self):
+        pass
+
+    @abstractmethod
+    def CreateTester(self):
+        pass
+
+
+class ExeFactory(Factory):
+    def CreateFolderManager(self):
+        return ExeFolderManager()
+
+    def CreateTester(self):
+        return ExeTester()
+
+
+class PythonFactory(Factory):
+    def CreateFolderManager(self):
+        return PythonFolderManager()
+
+    def CreateTester(self):
+        return PythonTester()
+
+
+def Init(factory: Factory, problemNumber: str):
     fetcher = BJFetcher()
-    manager = ExeFolderManager()
+    manager = factory.CreateFolderManager()
 
     while True:
         try:
@@ -206,8 +235,8 @@ def Init(problemNumber: str):
     storage.Save(fetcher.GetTestCases())
 
 
-def Test(problemNumber: str):
-    manager = ExeFolderManager()
+def Test(factory: Factory, problemNumber: str):
+    manager = factory.CreateFolderManager()
 
     try:
         storage = manager.GetTestCaseStorage(problemNumber)
@@ -215,7 +244,7 @@ def Test(problemNumber: str):
         print(e)
         return
 
-    tester = ExeTester()
+    tester = factory.CreateTester()
 
     try:
         testResult = tester.Test(manager.GetProgramAbsolutePath(problemNumber), storage.GetTestCases())
@@ -245,15 +274,26 @@ Expected:
 
 if __name__ == "__main__":
     while True:
+        while True:
+            language = input("1. Python\n2. C++\nSelect: ")
+
+            if language == "1":
+                factory = PythonFactory()
+            elif language == "2":
+                factory = ExeFactory()
+            else:
+                continue
+            break
+
         problemNumber = input("Problem Number: ")
 
         while True:
             action = input("Action (init or test or back): ")
 
             if action == "init":
-                Init(problemNumber)
+                Init(factory, problemNumber)
             elif action == "test":
-                Test(problemNumber)
+                Test(factory, problemNumber)
             elif action == "back":
                 break
             else:
