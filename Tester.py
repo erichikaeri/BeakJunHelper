@@ -46,7 +46,7 @@ class BJFetcher:
         return self.testCases
 
 
-class ProblemStorage:
+class TestCaseStorage:
     def __init__(self, absolutePath: str) -> None:
         self.filePath = os.path.join(absolutePath, "testCases.txt")
 
@@ -65,8 +65,8 @@ class ProblemStorage:
         return list(map(lambda each: tuple(each), listOfLists))
 
 
-class StorageManager:
-    def CreateProblemStorage(self, problemNumber: str) -> ProblemStorage:
+class ExeFolderManager:
+    def CreateTestCaseStorage(self, problemNumber: str) -> TestCaseStorage:
         if os.path.isdir(problemNumber):
             raise FileExistsError()
 
@@ -77,26 +77,35 @@ class StorageManager:
         templateDestPath = os.path.join(problemNumber, templateDestFileName)
         shutil.copyfile(templateFileName, templateDestPath)
 
-        return ProblemStorage(os.path.abspath(problemNumber))
+        return TestCaseStorage(os.path.abspath(problemNumber))
 
-    def DeleteProblemStorage(self, problemNumber: str) -> None:
+    def DeleteTestCaseStorage(self, problemNumber: str) -> None:
         if not os.path.isdir(problemNumber):
             return
 
         shutil.rmtree(problemNumber)
 
-    def GetProblemStorage(self, problemNumber: str) -> ProblemStorage:
+    def GetTestCaseStorage(self, problemNumber: str) -> TestCaseStorage:
         if not os.path.isdir(problemNumber):
             raise FileNotFoundError("You need to call CreateProblemStorage first.")
 
-        return ProblemStorage(os.path.abspath(problemNumber))
+        return TestCaseStorage(os.path.abspath(problemNumber))
 
     def GetProgramAbsolutePath(self, problemNumber: str) -> str:
         relPath = os.path.join(problemNumber, "{}.exe".format(problemNumber))
         return os.path.abspath(relPath)
 
 
-class Tester:
+class PythonFolderManager(ExeFolderManager):
+    '''따로 구현하는 게 맞지만 귀찮으므로 상속'''
+    def CreateProblemStorage(self, problemNumber: str) -> TestCaseStorage:
+        pass
+
+    def GetProgramAbsolutePath(self, problemNumber: str) -> str:
+        pass
+
+
+class ExeTester:
     def Test(self, programPath: str, testCases: list[TestCase]) -> Tuple[str, str, str]:
         '''Returns a tuple of ProgramInput, ProgramOutput, ExpectedOutput if test fails. None otherwise.'''
 
@@ -128,13 +137,18 @@ class Tester:
         return string.strip().replace("\r\n", "\n")
 
 
+class PythonTester:
+    def Test(self, sourceFilePath: str, testCases: list[TestCase]) -> Tuple[str, str, str]:
+        pass
+
+
 def Init(problemNumber: str):
     fetcher = BJFetcher()
-    manager = StorageManager()
+    manager = ExeFolderManager()
 
     while True:
         try:
-            storage = manager.CreateProblemStorage(problemNumber)
+            storage = manager.CreateTestCaseStorage(problemNumber)
             break
         except FileExistsError:
             pass
@@ -142,7 +156,7 @@ def Init(problemNumber: str):
         ans = input("Directory for the problem already exists. Delete and proceed? (y/n) ").lower()
 
         if ans == "y":
-            manager.DeleteProblemStorage(problemNumber)
+            manager.DeleteTestCaseStorage(problemNumber)
         elif ans == "n":
             return
 
@@ -156,15 +170,15 @@ def Init(problemNumber: str):
 
 
 def Test(problemNumber: str):
-    manager = StorageManager()
+    manager = ExeFolderManager()
 
     try:
-        storage = manager.GetProblemStorage(problemNumber)
+        storage = manager.GetTestCaseStorage(problemNumber)
     except Exception as e:
         print(e)
         return
 
-    tester = Tester()
+    tester = ExeTester()
 
     try:
         testResult = tester.Test(manager.GetProgramAbsolutePath(problemNumber), storage.GetTestCases())

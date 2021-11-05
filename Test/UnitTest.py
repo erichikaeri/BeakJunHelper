@@ -127,30 +127,30 @@ class TestBJFetcher(unittest.TestCase):
         self.assertEqual(testCases[1][1], Problem1018Output2)
 
 
-class TestProblemStorage(unittest.TestCase):
+class TestTestCaseStorage(unittest.TestCase):
     def setUp(self) -> None:
-        self.manager = Tester.StorageManager()
+        self.manager = Tester.ExeFolderManager()
         self.testCases = [(Problem1005Input1, Problem1005Output1), (Problem1018Input2, Problem1018Output2)]
 
     def test_SaveLoad(self):
-        storage = self.manager.CreateProblemStorage("123123123")
+        storage = self.manager.CreateTestCaseStorage("123123123")
         self.assertTrue(os.path.isdir("123123123"))
         self.assertTrue(os.path.isfile("123123123/123123123.cpp"))
 
         storage.Save(self.testCases)
         self.assertTrue(os.path.isfile("123123123/testCases.txt"))
 
-        storage = self.manager.GetProblemStorage("123123123")
+        storage = self.manager.GetTestCaseStorage("123123123")
         loadedTestCases = storage.GetTestCases()
         self.assertEqual(loadedTestCases, self.testCases)
 
-        self.manager.DeleteProblemStorage("123123123")
+        self.manager.DeleteTestCaseStorage("123123123")
         self.assertFalse(os.path.isdir("123123123"))
 
 
-class TestTester(unittest.TestCase):
+class TestExeTester(unittest.TestCase):
     def setUp(self) -> None:
-        self.tester = Tester.Tester()
+        self.tester = Tester.ExeTester()
         self.programPath = os.path.join("Test", "MultiplyByTwo.exe")
         self.newlineProgramPath = os.path.join("Test", "PrintNewLines.exe")
 
