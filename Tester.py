@@ -13,7 +13,10 @@ TestCase = Tuple[str, str]
 
 
 def StripNewline(string: str):
-    return string.strip().replace("\r\n", "\n")
+    linuxStyle = string.replace("\r\n", "\n")
+    lines = filter(None, linuxStyle.split("\n"))
+    lines = map(lambda each: each.strip(), lines)
+    return "\n".join(lines)
 
 
 class BJFetcher:
