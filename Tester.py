@@ -24,7 +24,7 @@ class BJFetcher:
         '''This function only fetches. Get fetch results from other functions. Throws if fetch fails.'''
 
         self.testCases = []
-        response = requests.get("https://www.acmicpc.net/problem/{0}".format(problemNumber))
+        response = requests.get(self.GetWebAddress(problemNumber))
         soup = BeautifulSoup(response.text, "html.parser")
         
         i = 1
@@ -50,6 +50,9 @@ class BJFetcher:
     def GetTestCases(self) -> list[TestCase]:
         '''Returns a list of test cases as tuples in which key is input and value is expected output.'''
         return self.testCases
+
+    def GetWebAddress(self,  problemNumber: str) -> str:
+        return "https://www.acmicpc.net/problem/{0}".format(problemNumber)
 
 
 class TestCaseStorage:
@@ -172,7 +175,7 @@ class PythonTester:
         return None
 
     @staticmethod
-    def RunProgram(sourceFilePath, testInput):
+    def RunProgram(sourceFilePath, testInput) -> str:
         command = 'python "{}"'.format(sourceFilePath)
 
         proc = subprocess.Popen(command, stdout=subprocess.PIPE, 
@@ -190,6 +193,9 @@ class Factory(ABC):
     @abstractmethod
     def CreateTester(self):
         pass
+
+    def CreateFetcher(self):
+        return BJFetcher()
 
 
 class ExeFactory(Factory):
@@ -209,7 +215,7 @@ class PythonFactory(Factory):
 
 
 def Init(factory: Factory, problemNumber: str):
-    fetcher = BJFetcher()
+    fetcher = factory.CreateFetcher()
     manager = factory.CreateFolderManager()
 
     while True:
@@ -272,10 +278,18 @@ Expected:
 ===============""".format(programInput, programOutput, expectedOutput))
 
 
+def Web(factory: Factory, problemNumber: str):
+    fetcher = factory.CreateFetcher()
+    addr = fetcher.GetWebAddress(problemNumber)
+    command = 'explorer "{}"'.format(addr)
+    subprocess.Popen(command)
+
+
 if __name__ == "__main__":
     while True:
         while True:
-            language = input("1. Python\n2. C++\nSelect: ")
+            print()
+            language = input("1. Python\n2. C++\n\nSelect: ")
 
             if language == "1":
                 factory = PythonFactory()
@@ -288,13 +302,16 @@ if __name__ == "__main__":
         problemNumber = input("Problem Number: ")
 
         while True:
-            action = input("Action (init or test or back): ")
+            print()
+            action = input("1. Init\n2. Test\n3. Web\n4. Back\n\nSelect: ")
 
-            if action == "init":
+            if action == "1":
                 Init(factory, problemNumber)
-            elif action == "test":
+            elif action == "2":
                 Test(factory, problemNumber)
-            elif action == "back":
+            elif action == "3":
+                Web(factory, problemNumber)
+            elif action == "4":
                 break
             else:
                 print("Invalid Action.")
