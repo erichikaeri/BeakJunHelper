@@ -101,8 +101,13 @@ class ExeFolderManager:
         return TestCaseStorage(os.path.abspath(problemNumber))
 
     def GetProgramAbsolutePath(self, problemNumber: str) -> str:
-        relPath = os.path.join(problemNumber, "{}.exe".format(problemNumber))
-        return os.path.abspath(relPath)
+        return os.path.join(self.GetFolderAbsolutePath(problemNumber), self.GetProgramName(problemNumber))
+
+    def GetFolderAbsolutePath(self, problemNumber: str) -> str:
+        return os.path.abspath(problemNumber)
+
+    def GetProgramName(self, problemNumber):
+        return "{}.exe".format(problemNumber)
 
 
 class PythonFolderManager(ExeFolderManager):
@@ -114,7 +119,7 @@ class PythonFolderManager(ExeFolderManager):
 
         os.mkdir(problemNumber)
         
-        templateDestFileName = self._GetSourceFileName(problemNumber)
+        templateDestFileName = self.GetProgramName(problemNumber)
         templateDestPath = os.path.join(problemNumber, templateDestFileName)
 
         with open(templateDestPath, "w"):
@@ -122,12 +127,7 @@ class PythonFolderManager(ExeFolderManager):
 
         return TestCaseStorage(os.path.abspath(problemNumber))
 
-    def GetProgramAbsolutePath(self, problemNumber: str) -> str:
-        relPath = os.path.join(problemNumber, self._GetSourceFileName(problemNumber))
-        return os.path.abspath(relPath)
-
-    @staticmethod
-    def _GetSourceFileName(problemNumber):
+    def GetProgramName(self, problemNumber):
         return "{}.py".format(problemNumber)
 
 
@@ -266,6 +266,8 @@ def Test(factory: Factory, problemNumber: str):
     programOutput = testResult[1]
     expectedOutput = testResult[2]
 
+    print()
+    print("Test Failed:")
     print("""===============
 Input:
 {0}
@@ -282,6 +284,20 @@ def Web(factory: Factory, problemNumber: str):
     fetcher = factory.CreateFetcher()
     addr = fetcher.GetWebAddress(problemNumber)
     command = 'explorer "{}"'.format(addr)
+    subprocess.Popen(command)
+
+
+def Folder(factory: Factory, problemNumber: str):
+    folderManager = factory.CreateFolderManager()
+
+    try:
+        folderManager.GetTestCaseStorage(problemNumber)
+    except FileNotFoundError:
+        print("No folder found for problem {}. Did you forget to init?".format(problemNumber))
+        return
+
+    folderPath = folderManager.GetFolderAbsolutePath(problemNumber)
+    command = 'explorer "{}"'.format(folderPath)
     subprocess.Popen(command)
 
 
@@ -303,7 +319,7 @@ if __name__ == "__main__":
 
         while True:
             print()
-            action = input("1. Init\n2. Test\n3. Web\n4. Back\n\nSelect: ")
+            action = input("1. Init\n2. Test\n3. Web\n4. Folder\n5. Back\n\nSelect: ")
 
             if action == "1":
                 Init(factory, problemNumber)
@@ -312,6 +328,8 @@ if __name__ == "__main__":
             elif action == "3":
                 Web(factory, problemNumber)
             elif action == "4":
+                Folder(factory, problemNumber)
+            elif action == "5":
                 break
             else:
                 print("Invalid Action.")
