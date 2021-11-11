@@ -127,25 +127,36 @@ class TestBJFetcher(unittest.TestCase):
         self.assertEqual(testCases[1][1], Problem1018Output2)
 
 
-class TestTestCaseStorage(unittest.TestCase):
+class TestExeFolderManager(unittest.TestCase):
     def setUp(self) -> None:
         self.manager = Tester.ExeFolderManager()
-        self.testCases = [(Problem1005Input1, Problem1005Output1), (Problem1018Input2, Problem1018Output2)]
 
     def test_SaveLoad(self):
-        storage = self.manager.CreateTestCaseStorage("123123123")
-        self.assertTrue(os.path.isdir("123123123"))
-        self.assertTrue(os.path.isfile("123123123/123123123.cpp"))
+        self.manager.CreateTestCaseStorage("123123123")
+        self.assertTrue(os.path.isdir("123123123_cpp"))
+        self.assertTrue(os.path.isfile("123123123_cpp/123123123.cpp"))
 
-        storage.Save(self.testCases)
-        self.assertTrue(os.path.isfile("123123123/testCases.txt"))
-
-        storage = self.manager.GetTestCaseStorage("123123123")
-        loadedTestCases = storage.GetTestCases()
-        self.assertEqual(loadedTestCases, self.testCases)
+        # should not throw
+        testCase = self.manager.GetTestCaseStorage("123123123")
 
         self.manager.DeleteTestCaseStorage("123123123")
-        self.assertFalse(os.path.isdir("123123123"))
+        self.assertFalse(os.path.isdir("123123123_cpp"))
+
+
+class TestPythonFolderManager(unittest.TestCase):
+    def setUp(self) -> None:
+        self.manager = Tester.PythonFolderManager()
+
+    def test_SaveLoad(self):
+        self.manager.CreateTestCaseStorage("123123123")
+        self.assertTrue(os.path.isdir("123123123_py"))
+        self.assertTrue(os.path.isfile("123123123_py/123123123.py"))
+
+        # should not throw
+        testCase = self.manager.GetTestCaseStorage("123123123")
+
+        self.manager.DeleteTestCaseStorage("123123123")
+        self.assertFalse(os.path.isdir("123123123_py"))
 
 
 class TestExeTester(unittest.TestCase):

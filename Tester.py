@@ -79,59 +79,71 @@ class TestCaseStorage:
 
 class ExeFolderManager:
     def CreateTestCaseStorage(self, problemNumber: str) -> TestCaseStorage:
-        if os.path.isdir(problemNumber):
+        folderName = self.GetFolderName(problemNumber)
+
+        if os.path.isdir(folderName):
             raise FileExistsError()
 
-        os.mkdir(problemNumber)
+        os.mkdir(folderName)
         
         templateFileName = "CPPTemplate.cpp"
         templateDestFileName = "{}.cpp".format(problemNumber)
-        templateDestPath = os.path.join(problemNumber, templateDestFileName)
+        templateDestPath = os.path.join(folderName, templateDestFileName)
         shutil.copyfile(templateFileName, templateDestPath)
 
-        return TestCaseStorage(os.path.abspath(problemNumber))
+        return TestCaseStorage(self.GetFolderAbsolutePath(problemNumber))
 
     def DeleteTestCaseStorage(self, problemNumber: str) -> None:
-        if not os.path.isdir(problemNumber):
+        folderName = self.GetFolderName(problemNumber)
+
+        if not os.path.isdir(folderName):
             return
 
-        shutil.rmtree(problemNumber)
+        shutil.rmtree(folderName)
 
     def GetTestCaseStorage(self, problemNumber: str) -> TestCaseStorage:
-        if not os.path.isdir(problemNumber):
+        if not os.path.isdir(self.GetFolderName(problemNumber)):
             raise FileNotFoundError("You need to call CreateProblemStorage first.")
 
-        return TestCaseStorage(os.path.abspath(problemNumber))
+        return TestCaseStorage(self.GetFolderAbsolutePath(problemNumber))
 
     def GetProgramAbsolutePath(self, problemNumber: str) -> str:
         return os.path.join(self.GetFolderAbsolutePath(problemNumber), self.GetProgramName(problemNumber))
 
     def GetFolderAbsolutePath(self, problemNumber: str) -> str:
-        return os.path.abspath(problemNumber)
+        return os.path.abspath(self.GetFolderName(problemNumber))
 
     def GetProgramName(self, problemNumber):
         return "{}.exe".format(problemNumber)
+
+    def GetFolderName(self, problemNumber):
+        return "{}_cpp".format(problemNumber)
 
 
 class PythonFolderManager(ExeFolderManager):
     '''따로 구현하는 게 맞지만 귀찮으므로 상속'''
 
     def CreateTestCaseStorage(self, problemNumber: str) -> TestCaseStorage:
-        if os.path.isdir(problemNumber):
+        folderName = self.GetFolderName(problemNumber)
+
+        if os.path.isdir(folderName):
             raise FileExistsError()
 
-        os.mkdir(problemNumber)
+        os.mkdir(folderName)
         
         templateDestFileName = self.GetProgramName(problemNumber)
-        templateDestPath = os.path.join(problemNumber, templateDestFileName)
+        templateDestPath = os.path.join(folderName, templateDestFileName)
 
         with open(templateDestPath, "w"):
             pass
 
-        return TestCaseStorage(os.path.abspath(problemNumber))
+        return TestCaseStorage(self.GetFolderAbsolutePath(problemNumber))
 
     def GetProgramName(self, problemNumber):
         return "{}.py".format(problemNumber)
+
+    def GetFolderName(self, problemNumber):
+        return "{}_py".format(problemNumber)
 
 
 class ExeTester:
