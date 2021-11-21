@@ -1,5 +1,4 @@
 import os
-from posixpath import relpath
 import shutil
 import subprocess
 from typing import Tuple
@@ -299,7 +298,7 @@ def Web(factory: Factory, problemNumber: str):
     fetcher = factory.CreateFetcher()
     addr = fetcher.GetWebAddress(problemNumber)
     command = 'explorer "{}"'.format(addr)
-    subprocess.Popen(command)
+    os.system(command)
 
 
 def Folder(factory: Factory, problemNumber: str):
@@ -313,7 +312,25 @@ def Folder(factory: Factory, problemNumber: str):
 
     folderPath = folderManager.GetFolderAbsolutePath(problemNumber)
     command = 'explorer "{}"'.format(folderPath)
-    subprocess.Popen(command)
+    os.system(command)
+
+
+def VsCode(factory: Factory, problemNumber: str):
+    folderManager = factory.CreateFolderManager()
+
+    try:
+        folderManager.GetTestCaseStorage(problemNumber)
+    except FileNotFoundError:
+        print("No folder found for problem {}. Did you forget to init?".format(problemNumber))
+        return
+
+    folderPath = folderManager.GetFolderAbsolutePath(problemNumber)
+    folderPath = os.path.dirname(folderPath)
+    command = 'code "{}"'.format(folderPath)
+    exitCode = os.system(command)
+    
+    if (exitCode != 0):
+        print("Did you forget to install Visual Studio Code?")
 
 
 if __name__ == "__main__":
@@ -334,7 +351,7 @@ if __name__ == "__main__":
 
         while True:
             print()
-            action = input("1. Init\n2. Test\n3. Web\n4. Folder\n5. Back\n\nSelect: ")
+            action = input("1. Init\n2. Test\n3. Web\n4. Folder\n5. VsCode\n6. Back\n\nSelect: ")
 
             if action == "1":
                 Init(factory, problemNumber)
@@ -345,6 +362,8 @@ if __name__ == "__main__":
             elif action == "4":
                 Folder(factory, problemNumber)
             elif action == "5":
+                VsCode(factory, problemNumber)
+            elif action == "6":
                 break
             else:
                 print("Invalid Action.")
