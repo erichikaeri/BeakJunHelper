@@ -86,9 +86,7 @@ class ExeFolderManager:
         os.mkdir(folderName)
         
         templateFileName = "CPPTemplate.cpp"
-        templateDestFileName = "{}.cpp".format(problemNumber)
-        templateDestPath = os.path.join(folderName, templateDestFileName)
-        shutil.copyfile(templateFileName, templateDestPath)
+        shutil.copyfile(templateFileName, self.GetSourceAbsolutePath(problemNumber))
 
         return TestCaseStorage(self.GetFolderAbsolutePath(problemNumber))
 
@@ -112,11 +110,17 @@ class ExeFolderManager:
     def GetFolderAbsolutePath(self, problemNumber: str) -> str:
         return os.path.abspath(self.GetFolderName(problemNumber))
 
+    def GetSourceAbsolutePath(self, problemNumber: str) -> str:
+        return os.path.join(self.GetFolderAbsolutePath(problemNumber), self.GetSourceName(problemNumber))
+
     def GetProgramName(self, problemNumber):
         return "{}.exe".format(problemNumber)
 
     def GetFolderName(self, problemNumber):
         return "{}_cpp".format(problemNumber)
+
+    def GetSourceName(self, problemNumber):
+        return "{}.cpp".format(problemNumber)
 
 
 class PythonFolderManager(ExeFolderManager):
@@ -130,10 +134,7 @@ class PythonFolderManager(ExeFolderManager):
 
         os.mkdir(folderName)
         
-        templateDestFileName = self.GetProgramName(problemNumber)
-        templateDestPath = os.path.join(folderName, templateDestFileName)
-
-        with open(templateDestPath, "w"):
+        with open(self.GetSourceAbsolutePath(problemNumber), "w"):
             pass
 
         return TestCaseStorage(self.GetFolderAbsolutePath(problemNumber))
@@ -143,6 +144,9 @@ class PythonFolderManager(ExeFolderManager):
 
     def GetFolderName(self, problemNumber):
         return "{}_py".format(problemNumber)
+
+    def GetSourceName(self, problemNumber):
+        return self.GetProgramName(problemNumber)
 
 
 class ExeTester:
@@ -331,6 +335,11 @@ def VsCode(factory: Factory, problemNumber: str):
     
     if (exitCode != 0):
         print("Did you forget to install Visual Studio Code?")
+        return
+
+    sourcePath = folderManager.GetSourceAbsolutePath(problemNumber)
+    command = 'code "{}"'.format(sourcePath)
+    os.system(command)
 
 
 if __name__ == "__main__":
